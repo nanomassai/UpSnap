@@ -1,12 +1,57 @@
-# UpSnap: wake sleeping Macs for remote control
+# UpSnap：Mac 完整唤醒 / Full wake for remote control
+
+[简体中文](#中文) · [English](#english)
+
+## 中文
+
+**Mac 能 Ping 通，但远程控制工具仍然连不上。** 这个 Fork 提供相应的代码修复和完整配置指南，帮助适用的 Mac 从后台唤醒恢复到可远程控制的状态。
+
+贡献者：[nanomassai](https://github.com/nanomassai)。基于原项目 [seriousm4x/UpSnap](https://github.com/seriousm4x/UpSnap)，保留原作者署名与 MIT 许可证。
+
+### 我们优化了什么？
+
+| 实际问题 | 我们的改进 | 代码或指南 |
+| --- | --- | --- |
+| 自定义唤醒命令还没执行完，UpSnap 一看到 Ping 成功就终止命令，并报告唤醒成功。 | **让唤醒命令执行完。** 只有命令成功结束且设备可达才报告成功，同时保留失败提示与超时限制。 | [代码修复 PR #1777](https://github.com/seriousm4x/UpSnap/pull/1777) |
+| 普通 WOL 可能让部分 Mac 只进入 DarkWake：网络能响应，但第三方远程桌面／远程控制工具仍不可用。 | **在适用的 Mac 上完成真正的唤醒。** 配置受限 SSH 执行短时 `caffeinate` 用户活动命令，配合持久化和实际远控验证。 | [完整配置指南（英文）](https://github.com/nanomassai/UpSnap/blob/docs/macos-full-wake-guide/docs/macos-full-wake.md) · [文档 PR #1778](https://github.com/seriousm4x/UpSnap/pull/1778) |
+
+后端修复适用于各类需要在网络恢复后继续执行的自定义唤醒命令，不仅限于 Mac。Mac 方案需要用户自行配置；它不是新的 WOL 协议，也不保证所有 Mac 的行为相同。
+
+### 从哪里开始？
+
+- **查看或测试代码：** [fix/wait-for-custom-wake-command 分支](https://github.com/nanomassai/UpSnap/tree/fix/wait-for-custom-wake-command)。
+- **配置 Mac：** [Mac 完整唤醒指南（英文）](https://github.com/nanomassai/UpSnap/blob/docs/macos-full-wake-guide/docs/macos-full-wake.md)，包含受限密钥、主机身份校验、持久化、自定义命令、鉴权 API、日志验证和回退。
+- **查看上游审核进度：** [#1777](https://github.com/seriousm4x/UpSnap/pull/1777) 和 [#1778](https://github.com/seriousm4x/UpSnap/pull/1778)。截至本页更新日期 **2026-10-12**，两份 PR 均已提交，尚未合并。
+
+**默认分支用于介绍贡献，实际改动位于上面链接的分支。** 直接使用 `master` 或原项目发布的镜像，不代表已包含 #1777。配置指南依赖该修复或包含等效修复的版本。
+
+另一项前端改进——**设备显示在线时仍允许发送唤醒**——已在本地部署中测试，但**尚未包含在这两份 PR 中**。如果你的版本没有独立的发送唤醒入口，可参考指南中的已有鉴权 API；不要伪造设备离线状态。
+
+### 哪些值需要你自己填写？
+
+填写你自己的 Mac IP／DNS 名称、账号、SSH 端口、设备 MAC／网络掩码、专用密钥、经核验的主机公钥和允许的来源地址。示例使用占位符或交互输入，不包含我们的私有部署地址、账号凭据或密钥。
+
+按指南设置后，专用密钥在 Mac 端被限制为执行 `caffeinate -u -t 5`，不能作为普通交互 Shell、转发、文件访问或桌面解锁凭据。指南同时说明了持久化存储和备份可能包含私钥的注意事项。
+
+### 验证结果与适用边界
+
+- 五项回归测试覆盖命令执行完成、延迟失败、完成后继续等待网络可达、设备离线超时，以及终止超时命令。
+- 两项关键测试在未修复的上游代码上失败，在修复后通过。
+- 后端测试、`go vet` 和针对性竞态检查通过；网络模块通过 Windows/amd64 与 macOS/arm64 交叉编译。交叉编译不等于在这些平台上完成运行测试。
+- 本地部署已验证 Mac 睡眠数分钟后恢复第三方远程控制，最后一次日志记录的睡眠时长为 **4 分 20 秒**；容器重启验证也已通过。**整台主机／路由器断电重启后的恢复尚未实测。**
+
+代码、测试和文档由 OpenAI Codex 辅助完成；详细验证记录与兼容性说明见对应 PR。
+
+---
+
+## English
 
 **The Mac answers ping, but your remote-control tool still cannot connect.** This fork contributes a fix and a setup guide for that gap.
 
-**中文：Mac 能 Ping 通，不代表已经完全唤醒。这里的改进让完整唤醒命令执行完，并教你把它配置成可用于远程控制的方案。**
 
 Contributions by [nanomassai](https://github.com/nanomassai), based on [seriousm4x/UpSnap](https://github.com/seriousm4x/UpSnap). Original project attribution and MIT licensing are retained.
 
-## What improved?
+### What improved?
 
 | The actual problem | Our contribution | Where to find it |
 | --- | --- | --- |
@@ -15,7 +60,7 @@ Contributions by [nanomassai](https://github.com/nanomassai), based on [seriousm
 
 The backend fix is generic: it helps any custom wake command that must finish after the device becomes reachable. The Mac recipe is optional configuration, not a new WOL protocol or a claim that every Mac behaves the same way.
 
-## Start here
+### Start here
 
 - **Review or test the code:** [fix/wait-for-custom-wake-command](https://github.com/nanomassai/UpSnap/tree/fix/wait-for-custom-wake-command).
 - **Configure a Mac:** [Mac full-wake guide](https://github.com/nanomassai/UpSnap/blob/docs/macos-full-wake-guide/docs/macos-full-wake.md). It covers the restricted key, host-key verification, persistent storage, custom command, an authenticated API option, logs and rollback.
@@ -25,13 +70,13 @@ The backend fix is generic: it helps any custom wake command that must finish af
 
 The separate frontend improvement, **sending wake even when a device is already shown as online**, has been tested in the local deployment but is **not yet submitted in these PRs**. Until an explicit action is available in your version, the guide describes the existing authenticated wake API. It does not recommend faking an offline state.
 
-## What do you configure yourself?
+### What do you configure yourself?
 
 Supply your own Mac IP/DNS name, account, SSH port, device MAC/netmask, dedicated key, verified host key and allowed source address. Examples use placeholders or interactive input. No private deployment addresses, account credentials or keys are included.
 
 The dedicated key is restricted on the Mac to `caffeinate -u -t 5`. It is not intended for an interactive shell, forwarding, file access or desktop unlocking. The guide explains both the restrictions and the implications of storing it in a persistent data directory and backups.
 
-## Evidence and limits
+### Evidence and limits
 
 - Five regression tests cover command completion, delayed failure, reachability after completion, offline timeout and stopping an overlong command.
 - The two main regression cases fail on unmodified upstream and pass with the fix.
