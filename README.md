@@ -1,3 +1,50 @@
+# UpSnap: wake sleeping Macs for remote control
+
+**The Mac answers ping, but your remote-control tool still cannot connect.** This fork contributes a fix and a setup guide for that gap.
+
+**中文：Mac 能 Ping 通，不代表已经完全唤醒。这里的改进让完整唤醒命令执行完，并教你把它配置成可用于远程控制的方案。**
+
+Contributions by [nanomassai](https://github.com/nanomassai), based on [seriousm4x/UpSnap](https://github.com/seriousm4x/UpSnap). Original project attribution and MIT licensing are retained.
+
+## What improved?
+
+| The actual problem | Our contribution | Where to find it |
+| --- | --- | --- |
+| A custom wake command is still working, but UpSnap sees a successful ping, stops the command and reports success. | **Let the wake command finish.** Require command success and reachability; retain failure reporting and the configured timeout. | [Code fix: PR #1777](https://github.com/seriousm4x/UpSnap/pull/1777) |
+| Ordinary WOL can leave some Macs in DarkWake: the network responds, but third-party remote-desktop/remote-control tools remain unavailable. | **Complete the wake on supported Macs.** Configure restricted SSH to run a short `caffeinate` user-activity command, with persistence and real remote-control verification. | [Read the complete guide](https://github.com/nanomassai/UpSnap/blob/docs/macos-full-wake-guide/docs/macos-full-wake.md) · [Documentation PR #1778](https://github.com/seriousm4x/UpSnap/pull/1778) |
+
+The backend fix is generic: it helps any custom wake command that must finish after the device becomes reachable. The Mac recipe is optional configuration, not a new WOL protocol or a claim that every Mac behaves the same way.
+
+## Start here
+
+- **Review or test the code:** [fix/wait-for-custom-wake-command](https://github.com/nanomassai/UpSnap/tree/fix/wait-for-custom-wake-command).
+- **Configure a Mac:** [Mac full-wake guide](https://github.com/nanomassai/UpSnap/blob/docs/macos-full-wake-guide/docs/macos-full-wake.md). It covers the restricted key, host-key verification, persistent storage, custom command, an authenticated API option, logs and rollback.
+- **Follow upstream review:** [#1777](https://github.com/seriousm4x/UpSnap/pull/1777) and [#1778](https://github.com/seriousm4x/UpSnap/pull/1778). Both were open and unmerged when this overview was updated on 2026-10-12.
+
+**This default branch presents the contributions; the changes are on the linked branches.** Checking out `master` or pulling an original upstream release image does not automatically include #1777. The guide requires that fix or an equivalent build.
+
+The separate frontend improvement, **sending wake even when a device is already shown as online**, has been tested in the local deployment but is **not yet submitted in these PRs**. Until an explicit action is available in your version, the guide describes the existing authenticated wake API. It does not recommend faking an offline state.
+
+## What do you configure yourself?
+
+Supply your own Mac IP/DNS name, account, SSH port, device MAC/netmask, dedicated key, verified host key and allowed source address. Examples use placeholders or interactive input. No private deployment addresses, account credentials or keys are included.
+
+The dedicated key is restricted on the Mac to `caffeinate -u -t 5`. It is not intended for an interactive shell, forwarding, file access or desktop unlocking. The guide explains both the restrictions and the implications of storing it in a persistent data directory and backups.
+
+## Evidence and limits
+
+- Five regression tests cover command completion, delayed failure, reachability after completion, offline timeout and stopping an overlong command.
+- The two main regression cases fail on unmodified upstream and pass with the fix.
+- Backend tests, `go vet` and targeted race checks pass; the networking package cross-compiles for Windows/amd64 and macOS/arm64. These compile checks are not runtime tests on those platforms.
+- A local deployment successfully restored third-party remote control after several minutes of Mac sleep; the last captured sleep interval was **4 minutes 20 seconds**. Container-restart verification also passed. Whole-host/router power-cycle recovery has not been verified.
+
+Code, tests and documentation were prepared with OpenAI Codex assistance. Exact test details and compatibility notes are recorded in the PRs.
+
+<details>
+<summary>Original UpSnap README — upstream features and installation</summary>
+
+The original documentation below describes upstream UpSnap. Its release/image links do not imply that the pending contributions above are included.
+
 <div align="center" width="100%">
     <img src="frontend/static/gopher.svg" width="150" />
 </div>
@@ -191,3 +238,5 @@ pnpm run dev
 ```
 
 Open up [http://localhost:5173/](http://localhost:5173/), create an admin user and add some devices.
+
+</details>
