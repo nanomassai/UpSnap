@@ -1,11 +1,11 @@
-FROM node:bookworm AS node
+FROM node:24-bookworm AS node
 WORKDIR /app
 COPY frontend/ .
-RUN npm i -g pnpm &&\
-    pnpm i &&\
+RUN npm i -g pnpm@12.6.0 &&\
+    pnpm i --frozen-lockfile &&\
     pnpm run build
 
-FROM golang:alpine AS go
+FROM golang:1.27-alpine AS go
 WORKDIR /app
 COPY backend/ .
 COPY --from=node /app/build ./pb_public

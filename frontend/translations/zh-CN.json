@@ -200,5 +200,10 @@
 	"welcome_btn_done": "完成",
 	"welcome_desc": "检查服务器控制台日志以获取创建初始超级用户账户的链接。创建超级用户后，请返回此处。",
 	"welcome_not_ready": "尚未找到超级用户。请先完成设置。",
-	"welcome_title": "需要初始设置"
+	"welcome_title": "需要初始设置",
+	"manual_wake_send": "发送唤醒",
+	"manual_wake_sending": "正在发送…",
+	"manual_wake_label": "发送唤醒：{name}",
+	"manual_wake_hint": "网络可达不代表完全唤醒；在线时也可发送唤醒。",
+	"manual_wake_complete": "唤醒请求已完成，请确认远程控制可用。"
 }

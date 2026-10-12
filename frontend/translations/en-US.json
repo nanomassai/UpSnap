@@ -204,5 +204,10 @@
 	"welcome_btn_done": "Done",
 	"welcome_desc": "Check the server console logs for a link to create the initial superuser account. Once you have created the superuser, come back here.",
 	"welcome_not_ready": "No superuser found yet. Please complete the setup first.",
-	"welcome_title": "Initial setup required"
+	"welcome_title": "Initial setup required",
+	"manual_wake_send": "Send wake",
+	"manual_wake_sending": "Sending…",
+	"manual_wake_label": "Send wake: {name}",
+	"manual_wake_hint": "Network reachable does not mean fully awake. You can send wake while online.",
+	"manual_wake_complete": "Wake request completed. Verify that remote control is usable."
 }

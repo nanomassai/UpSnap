@@ -9,8 +9,15 @@
 	let { device = $bindable() }: { device: Device } = $props();
 	let hoverText = $state('');
 	let disabled = $state(false);
+	let wakeInFlight = $state(false);
+	let canWake = $derived(
+		$pocketbase.authStore.isSuperuser || Boolean($permission.power?.includes(device.id))
+	);
+	let wakeDisabled = $derived(
+		!canWake || wakeInFlight || device.status === 'pending' || device.status === ''
+	);
 	let timeout = $state(120);
-	let interval: number;
+	let interval: ReturnType<typeof setInterval> | 0;
 	let modalWake: HTMLDialogElement;
 	let modalShutdown: HTMLDialogElement;
 	let seconds = $derived(timeout % 60);
@@ -47,33 +54,38 @@
 		}
 	});
 
-	function wake() {
+	async function wake() {
+		if (wakeDisabled) return;
+		const previousStatus = device.status;
+		wakeInFlight = true;
 		countdown(Date.now(), 'wake');
 		device.status = 'pending';
-
-		fetch(`${backendUrl}api/upsnap/wake/${device.id}`, {
-			headers: {
-				Authorization: $pocketbase.authStore.token
-			}
-		})
-			.then((resp) => resp.json())
-			.then(async (data) => {
-				if (data.status !== 200) {
-					device.status = 'offline';
-					return;
-				}
-				device = data as Device;
-				if (device.status === 'online' && device.link && device.link_open !== '') {
-					if (device.link_open === 'new_tab') {
-						window.open(device.link, '_blank');
-					} else {
-						window.open(device.link, '_self');
-					}
-				}
-			})
-			.catch((err) => {
-				toast.error(err.message);
+		try {
+			const response = await fetch(`${backendUrl}api/upsnap/wake/${device.id}`, {
+				headers: { Authorization: $pocketbase.authStore.token }
 			});
+			const data = await response.json();
+			if (!response.ok) throw new Error(data.message || `Wake request failed (${response.status})`);
+			device = data as Device;
+			toast.success(m.manual_wake_complete());
+			if (device.status === 'online' && device.link && device.link_open !== '') {
+				if (device.link_open === 'new_tab') window.open(device.link, '_blank');
+				else window.location.href = device.link;
+			}
+		} catch (err) {
+			clearInterval(interval);
+			interval = 0;
+			device.status = previousStatus;
+			toast.error(err instanceof Error ? err.message : 'Wake request failed');
+		} finally {
+			wakeInFlight = false;
+		}
+	}
+
+	function requestManualWake() {
+		if (wakeDisabled) return;
+		if (device.wake_confirm) askConfirmation('wake');
+		else void wake();
 	}
 
 	function shutdown() {
@@ -210,6 +222,19 @@
 			{/if}
 		</div>
 	</div>
+</div>
+
+<div class="mt-3 flex flex-wrap items-center gap-2">
+	<button
+		type="button"
+		class="btn btn-outline btn-sm"
+		disabled={wakeDisabled}
+		onclick={requestManualWake}
+		aria-label={m.manual_wake_label({ name: device.name })}
+	>
+		{wakeInFlight ? m.manual_wake_sending() : m.manual_wake_send()}
+	</button>
+	<span class="text-xs opacity-70">{m.manual_wake_hint()}</span>
 </div>
 
 <dialog class="modal" bind:this={modalWake}>

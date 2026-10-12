@@ -51,7 +51,7 @@
 
 	// update device status change
 	let now = $state(Date.now());
-	let interval: number;
+	let interval: ReturnType<typeof setInterval> | 0;
 	$effect(() => {
 		clearInterval(interval);
 		interval = setInterval(() => {

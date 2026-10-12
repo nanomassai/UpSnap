@@ -200,5 +200,10 @@
 	"welcome_btn_done": "完成",
 	"welcome_desc": "查看伺服器控制台日誌以獲取創建初始超級用戶帳號的連結。創建超級用戶後，請返回此處。",
 	"welcome_not_ready": "尚未找到超級用戶。請先完成設定。",
-	"welcome_title": "需要初始設定"
+	"welcome_title": "需要初始設定",
+	"manual_wake_send": "傳送喚醒",
+	"manual_wake_sending": "正在傳送…",
+	"manual_wake_label": "傳送喚醒：{name}",
+	"manual_wake_hint": "網路可達不代表完全喚醒；在線時也可傳送喚醒。",
+	"manual_wake_complete": "喚醒請求已完成，請確認遠端控制可用。"
 }
